@@ -1,0 +1,31 @@
+# Base stage: Install pnpm globally
+FROM node:20-alpine AS base
+RUN npm i -g pnpm
+WORKDIR /app
+
+# Install all dependencies (development + production)
+FROM base AS dependencies-env
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Install only development dependencies
+FROM dependencies-env AS development-dependencies-env
+RUN pnpm install --frozen-lockfile
+
+# Install only production dependencies
+FROM dependencies-env AS production-dependencies-env
+RUN pnpm install --prod --frozen-lockfile
+
+# Build the application
+FROM development-dependencies-env AS build-env
+COPY . .
+RUN pnpm build
+
+# Final image to run the application
+FROM node:20-alpine
+RUN npm i -g pnpm
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+COPY --from=production-dependencies-env /app/node_modules /app/node_modules
+COPY --from=build-env /app/build /app/build
+CMD ["pnpm", "start"]

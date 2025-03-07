@@ -88,7 +88,7 @@ const RiderKYCForm = () => {
                   { label: "Aadhar Number", name: "aadharNumber", placeholder: "XXXX-XXXX-XXXX" },
                   { label: "PAN Number", name: "panNumber", placeholder: "AAXXX1234X" },
                   { label: "DL Number", name: "dlNumber", placeholder: "DL123456789" },
-                  { label: "Vehicle", name: "vehicle", placeholder: "Vehicle Model" },
+                  { label: "Vehicle Registration Number", name: "vehicle", placeholder: "AB12345" },
                 ].map(({ label, name, placeholder }: { label: string; name: any; placeholder: string }) => (
                   <FormField
                     key={name}

@@ -35,19 +35,23 @@ const RiderKYCForm = () => {
   const onSubmit = async (data: any) => {
     const formData = new FormData();
 
-    // Append text fields
+    // Append required text fields
     formData.append("name", data.name);
     formData.append("address", data.address);
     formData.append("aadharNumber", data.aadharNumber);
-    formData.append("panNumber", data.panNumber);
-    formData.append("dlNumber", data.dlNumber);
     formData.append("vehicle", data.vehicle);
 
-    // Append files
+    // Append optional text fields if provided
+    if (data.panNumber) formData.append("panNumber", data.panNumber);
+    if (data.dlNumber) formData.append("dlNumber", data.dlNumber);
+
+    // Append required files
     if (data.aadharFile?.[0]) formData.append("aadharFile", data.aadharFile[0]);
+    if (data.riderPhoto?.[0]) formData.append("riderPhoto", data.riderPhoto[0]);
+
+    // Append optional files if provided
     if (data.panFile?.[0]) formData.append("panFile", data.panFile[0]);
     if (data.dlFile?.[0]) formData.append("dlFile", data.dlFile[0]);
-    if (data.riderPhoto?.[0]) formData.append("riderPhoto", data.riderPhoto[0]);
 
     try {
       setIsSubmitting(true);
@@ -58,6 +62,8 @@ const RiderKYCForm = () => {
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.detail || "Something went wrong");
+
+      form.reset();
 
       console.log("Success:", result);
     } catch (error) {
@@ -75,7 +81,7 @@ const RiderKYCForm = () => {
         </div>
       </div>
       <div className="container mx-auto bg-white h-full p-4">
-        <Form {...form} >
+        <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Card>
               <CardHeader>
@@ -83,21 +89,21 @@ const RiderKYCForm = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: "Driver Name", name: "name", placeholder: "John Doe" },
-                  { label: "Address", name: "address", placeholder: "123 Main St" },
-                  { label: "Aadhar Number", name: "aadharNumber", placeholder: "XXXX-XXXX-XXXX" },
-                  { label: "PAN Number", name: "panNumber", placeholder: "AAXXX1234X" },
-                  { label: "DL Number", name: "dlNumber", placeholder: "DL123456789" },
-                  { label: "Vehicle Registration Number", name: "vehicle", placeholder: "AB12345" },
-                ].map(({ label, name, placeholder }: { label: string; name: any; placeholder: string }) => (
+                  { label: "Driver Name", name: "name", placeholder: "John Doe", required: true },
+                  { label: "Address", name: "address", placeholder: "123 Main St", required: true },
+                  { label: "Aadhar Number", name: "aadharNumber", placeholder: "XXXX-XXXX-XXXX", required: true },
+                  { label: "PAN Number", name: "panNumber", placeholder: "AAXXX1234X", required: false },
+                  { label: "DL Number", name: "dlNumber", placeholder: "DL123456789", required: false },
+                  { label: "Vehicle Registration Number", name: "vehicle", placeholder: "AB12345", required: true },
+                ].map(({ label, name, placeholder, required }: any) => (
                   <FormField
                     key={name}
                     control={form.control}
                     name={name}
-                    rules={{ required: `${label} is required` }}
+                    rules={required ? { required: `${label} is required` } : {}}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel>{label} {required && <span className="text-red-500">*</span>} </FormLabel>
                         <FormControl>
                           <Input placeholder={placeholder} {...field} />
                         </FormControl>
@@ -112,25 +118,25 @@ const RiderKYCForm = () => {
               <CardHeader>
                 <CardTitle>File Uploads</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 {[
-                  { label: "Upload Aadhar File", name: "aadharFile", accept: "image/*,application/pdf" },
-                  { label: "Upload PAN File", name: "panFile", accept: "image/*,application/pdf" },
-                  { label: "Upload Driving License", name: "dlFile", accept: "image/*,application/pdf" },
-                  { label: "Upload Rider Photo", name: "riderPhoto", accept: "image/*" },
-                ].map(({ label, name, accept }: { label: string; name: any; accept: string }) => (
+                  { label: "Upload Aadhar File", name: "aadharFile", accept: "image/*,application/pdf", required: true },
+                  { label: "Upload PAN File", name: "panFile", accept: "image/*,application/pdf", required: false },
+                  { label: "Upload Driving License", name: "dlFile", accept: "image/*,application/pdf", required: false },
+                  { label: "Upload Rider Photo", name: "riderPhoto", accept: "image/*", required: true },
+                ].map(({ label, name, accept, required }: any) => (
                   <FormField
                     key={name}
                     control={form.control}
                     name={name}
-                    rules={{ validate: (files) => handleFileValidation(files?.[0]) }}
+                    rules={required ? { validate: (files) => files?.[0] || `${label} is required` } : {}}
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{label}</FormLabel>
+                      <FormItem className="flex flex-col gap-1">
+                        <FormLabel>{label} {required && <span className="text-red-500">*</span>} </FormLabel>
                         <Controller
                           name={name}
                           control={form.control}
-                          render={({ field: { onChange, value } }) => (
+                          render={({ field: { onChange } }) => (
                             <input
                               type="file"
                               accept={accept}
